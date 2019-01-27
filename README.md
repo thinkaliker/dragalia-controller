@@ -21,7 +21,7 @@ This is a Python 3.7 script which enables using a controller to control the mobi
 
 1. Start scrcpy.
 1. Connect your controller of choice.
-1. Run `python dragalia_lost.py`
+1. Run `python dragalia-controller.py`
 1. Maximize scrcpy.
 1. Sit back and enjoy using your controller to play!
 
@@ -64,3 +64,5 @@ There are lots of them, I'm sure (see below). If you find something though, plea
 - Different devices (find an easier way? relative screen boundaries vs exact screen boundaries?)
 - Automatic detection of which menu you're in and switch input schemes automatically (inputs may be able to do detection)
 - Sticker menu (find a button combo)
+
+### Dragalia Lost is copyright Nintendo, Cygames.
