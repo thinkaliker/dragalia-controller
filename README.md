@@ -63,3 +63,4 @@ There are lots of them, I'm sure (see below). If you find something though, plea
 - Different DPI scaling support
 - Different devices (find an easier way? relative screen boundaries vs exact screen boundaries?)
 - Automatic detection of which menu you're in and switch input schemes automatically (inputs may be able to do detection)
+- Sticker menu (find a button combo)
