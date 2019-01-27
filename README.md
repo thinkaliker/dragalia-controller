@@ -16,6 +16,7 @@ This is a Python 3.7 script which enables using a controller to control the mobi
 1. Make sure you have all of the requirements fulfilled and you know how to use/run each one.
 1. Run `pip install pyautogui`
 1. Run `pip install inputs`
+1. Clone this repository to anywhere on your computer.
 1. Adjust button coordinates as needed.
 
 ## Running
@@ -30,8 +31,8 @@ This is a Python 3.7 script which enables using a controller to control the mobi
 ## Defaults (my setup)
 
 - OS: Windows 10
-- Monitor size: 1920x1080
-- Phone resolution: 1080x1920
+- Monitor size: 1920x1080, 24"
+- Phone resolution: 1080x1920, Pixel 2
 - Dragalia Lost: Right Hand Mode, Quick90 off, Quick180 off
 
 ### Default Key mappings for Xbox One/360
