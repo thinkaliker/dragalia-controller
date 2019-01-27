@@ -12,7 +12,7 @@ DEAD_ZONE = 2000
 FLICK_ZONE = 10000
 JOY_MIN = 0
 JOY_MAX = 30000
-REFRESH_HZ = 60
+REFRESH_HZ = 120
 
 # Global variables
 current_char = 1
@@ -100,7 +100,8 @@ def reset_mouse():
 # MousesDown at coordinate if state != 0, otherwise mouseUp and reset
 def click_mouse(x, y, state):
     if (state == 1 or state == -1):
-        pyautogui.mouseDown(x, y)
+        pyautogui.moveTo(x, y)
+        pyautogui.mouseDown()
     elif state == 0:
         pyautogui.mouseUp()
         reset_mouse()
@@ -130,7 +131,9 @@ def click_drag_mouse(x, y):
     move_y = scale(-y)
     if not ljoy_held:
         reset_mouse()
-        pyautogui.mouseDown(CENTER_X, CENTER_Y)
+        pyautogui.mouseUp()
+        pyautogui.moveTo(CENTER_X, CENTER_Y)
+        pyautogui.mouseDown()
         ljoy_held = True
     pyautogui.moveTo(CENTER_X + move_x, CENTER_Y + move_y)
 
@@ -148,7 +151,9 @@ def swipe(x, y):
     move_y = scale(-y)
     if not rjoy_held:
         reset_mouse()
-        pyautogui.mouseDown(CENTER_X, CENTER_Y)
+        pyautogui.mouseUp()
+        pyautogui.moveTo(CENTER_X, CENTER_Y)
+        pyautogui.mouseDown()
         pyautogui.moveTo(CENTER_X + move_x, CENTER_Y + move_y)
         pyautogui.mouseUp()
         reset_mouse()
@@ -201,7 +206,10 @@ def main_loop():
     global sly_val
     global srx_val
     global sry_val
-    events = get_gamepad()
+    try:
+        events = get_gamepad()
+    except Exception as e:
+        print('Exception', str(e))
     for event in events:
         if event.ev_type != 'Sync':
             #print(event.ev_type, event.code, event.state)
@@ -242,8 +250,6 @@ def main_loop():
                     switch_char('d', event.state)
                 else:
                     switch_char('z', event.state)
-            elif event.code == joystick_map['pause']:
-                press(event.code, event.state)
             else:
                 try:
                     press(event.code, event.state)

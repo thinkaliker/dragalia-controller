@@ -2,6 +2,7 @@
 
 This is a Python 3.7 script which enables using a controller to control the mobile game Dragalia Lost on Android without an emulator by using scrcpy.
 
+[Video Demo!](https://www.youtube.com/watch?v=y3Dm4DJzWeU)
 
 ## Requirements
 
@@ -24,6 +25,7 @@ This is a Python 3.7 script which enables using a controller to control the mobi
 1. Run `python dragalia-controller.py`
 1. Maximize scrcpy.
 1. Sit back and enjoy using your controller to play!
+1. Press ctrl+c a few times to quit.
 
 ## Defaults (my setup)
 
