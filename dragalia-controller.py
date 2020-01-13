@@ -1,12 +1,14 @@
-import pyautogui
 import inputs
+import pyautogui
+from win32gui import GetForegroundWindow, FindWindow, GetWindowRect
 from inputs import devices, get_gamepad
 
+# CHANGE ME
+WINDOW_TITLE = 'Pixel 2'
+UI_LAYOUT = 'right'
+TITLE_OFFSET = 30
+
 # Constants
-SCREEN_W = 1920
-SCREEN_H = 1080
-CENTER_X = SCREEN_W / 2
-CENTER_Y = SCREEN_H / 2
 MOVE_DELTA = 175
 DEAD_ZONE = 2000
 FLICK_ZONE = 10000
@@ -15,6 +17,14 @@ JOY_MAX = 30000
 REFRESH_HZ = 120
 
 # Global variables
+left_x = 0
+left_y = 0
+right_x = 0
+right_y = 0
+screen_w = 1920
+screen_h = 1080
+wincenter_x = 0
+wincenter_y = 0
 current_char = 1
 x_set = False
 y_set = False
@@ -77,25 +87,95 @@ joystick_map = {
 inv_joystick = { v: k for k, v in joystick_map.items()}
 
 # Maps actions to coordinates and joystick buttons
+# x and y are calculated based on window position
+# delta_x and delta_y are fractional offsets from default UI layout right corner for ratio scaling
+# skill_2 and skill_3 will be offsets from skill_1 depending on corner
 game_buttons = {
-    'attack' : {'x' : SCREEN_W / 2, 'y' : SCREEN_H / 2, 'button' : joystick_map['attack']},
-    'skill_1' : {'x' : 875, 'y' : 900, 'button' : joystick_map['skill_1']},
-    'skill_2' : {'x' : 1000, 'y' : 900, 'button' : joystick_map['skill_2']},
-    'skill_3' : {'x' : 1100, 'y' : 900, 'button' : joystick_map['skill_3']},
-    'dragon' : {'x' : 750, 'y' : 750, 'button' : joystick_map['dragon']},
-    'helper' : {'x' : 1200, 'y' : 900, 'button' : joystick_map['helper']},
-    'minimap' : {'x' : 1165, 'y' : 135, 'button' : joystick_map['minimap']},
-    'unpause' : {'x' : 850, 'y' : 750, 'button' : joystick_map['pause']},
-    'pause' : {'x' : 1215, 'y' : 90, 'button' : joystick_map['pause']},
-    'char_1' : {'x' : 710, 'y' : 95, 'button' : joystick_map['char_ud']},
-    'char_2' : {'x' : 710, 'y' : 150, 'button' : joystick_map['char_ud']},
-    'char_3' : {'x' : 710, 'y' : 210, 'button' : joystick_map['char_ud']},
-    'char_4' : {'x' : 710, 'y' : 275, 'button' : joystick_map['char_ud']}
+    'attack' : {'x' : wincenter_x, 'y' : wincenter_y, 'delta_x' : 0, 'delta_y' : 0, 'button' : joystick_map['attack']},
+    'skill_1' : {'x' : 875, 'y' : 900, 'delta_x' : 0.3500, 'delta_y' : 0.0682, 'button' : joystick_map['skill_1']},
+    'skill_2' : {'x' : 1000, 'y' : 900, 'delta_x' : 0.1960, 'delta_y' : 0.93457, 'button' : joystick_map['skill_2']},
+    'skill_3' : {'x' : 1100, 'y' : 900, 'delta_x' : 0.3920, 'delta_y' : 0.93457, 'button' : joystick_map['skill_3']},
+    'dragon' : {'x' : 750, 'y' : 750, 'delta_x' : 0.1428, 'delta_y' : 0.2280, 'button' : joystick_map['dragon']},
+    'helper' : {'x' : 1200, 'y' : 900, 'delta_x' : 0.0827, 'delta_y' : 0.0800, 'button' : joystick_map['helper']},
+    'minimap' : {'x' : 1165, 'y' : 135, 'delta_x' : 0.1561, 'delta_y' : 0.0813, 'button' : joystick_map['minimap']},
+    'unpause' : {'x' : 850, 'y' : 750, 'delta_x' : 0.4604, 'delta_y' : 0.5578, 'button' : joystick_map['pause']},
+    'pause' : {'x' : 1215, 'y' : 90, 'delta_x' : 0.0660, 'delta_y' : 0.0373, 'button' : joystick_map['pause']},
+    'char_1' : {'x' : 710, 'y' : 95, 'delta_x' : 0.0660, 'delta_y' : 0.0373, 'button' : joystick_map['char_ud']},
+    'char_2' : {'x' : 710, 'y' : 150, 'delta_x' : 0.0660, 'delta_y' : 0.1018, 'button' : joystick_map['char_ud']},
+    'char_3' : {'x' : 710, 'y' : 210, 'delta_x' : 0.0660, 'delta_y' : 0.1663, 'button' : joystick_map['char_ud']},
+    'char_4' : {'x' : 710, 'y' : 275, 'delta_x' : 0.0660, 'delta_y' : 0.2317, 'button' : joystick_map['char_ud']}
 }
+
+# grabs coordinates for window with WINDOW_TITLE and updates wincenter_x and wincenter_y
+def find_window():
+    global wincenter_x, wincenter_y, screen_w, screen_h, left_x, left_y, right_x, right_y
+    scr_win = FindWindow(None, WINDOW_TITLE)
+    (left_x, left_y, right_x, right_y) = GetWindowRect(scr_win)
+    screen_w = right_x - left_x
+    screen_h = right_y - left_y - TITLE_OFFSET
+    wincenter_x = int(left_x + (screen_w/2))
+    wincenter_y = int(left_y + (screen_h/2))
+    left_y = left_y + TITLE_OFFSET
+    #print (screen_w, screen_h, wincenter_x, wincenter_y)
+    compute_all()
+
+# Helper to compute specific button based on delta_x, delta_y ratio for screen scaling
+# Calculation changes based on UI Layout
+def compute_button(name, corner):
+    global game_buttons
+    if corner == 'tl':
+        new_x = left_x + (game_buttons[name]['delta_x'] * screen_w)
+        new_y = left_y + (game_buttons[name]['delta_y'] * screen_h)
+    elif corner == 'tr':
+        new_x = right_x - (game_buttons[name]['delta_x'] * screen_w)
+        new_y = left_y + (game_buttons[name]['delta_y'] * screen_h)
+    elif corner == 'bl':
+        if name == 'skill_2' or name == 'skill_3':
+            new_x = game_buttons['skill_1']['x'] + (game_buttons[name]['delta_x'] * screen_w)
+            new_y = game_buttons['skill_1']['y']
+        else:
+            new_x = left_x + (game_buttons[name]['delta_x'] * screen_w)
+            new_y = right_y - (game_buttons[name]['delta_y'] * screen_h)
+    elif corner == 'br':
+        if name == 'skill_2' or name == 'skill_3':
+            new_x = game_buttons['skill_1']['x'] - (game_buttons[name]['delta_x'] * screen_w)
+            new_y = game_buttons['skill_1']['y']
+        else:
+            new_x = right_x - (game_buttons[name]['delta_x'] * screen_w)
+            new_y = right_y - (game_buttons[name]['delta_y'] * screen_h)
+    elif corner == 'center':
+        new_x = wincenter_x - (game_buttons[name]['delta_x']/2 * screen_w)
+        new_y = wincenter_y +    (game_buttons[name]['delta_y']/2 * screen_h)
+    game_buttons[name]['x'] = int(new_x)
+    game_buttons[name]['y'] = int(new_y)
+
+# Calculates button positions based on center position
+def compute_all():
+    compute_button('attack', 'center')
+    if UI_LAYOUT == 'right':
+        compute_button('skill_1', 'bl')
+        compute_button('skill_2', 'bl')
+        compute_button('skill_3', 'bl')
+        compute_button('dragon', 'bl')
+        compute_button('helper', 'br')
+    elif UI_LAYOUT == 'left':
+        compute_button('skill_1', 'br')
+        compute_button('skill_2', 'br')
+        compute_button('skill_3', 'br')
+        compute_button('dragon', 'br')
+        compute_button('helper', 'bl')
+    compute_button('minimap', 'tr')
+    compute_button('unpause', 'center')
+    compute_button('pause', 'tr')
+    compute_button('char_1', 'tl')
+    compute_button('char_2', 'tl')
+    compute_button('char_3', 'tl')
+    compute_button('char_4', 'tl')
+    #print (game_buttons)
 
 # Centers mouse
 def reset_mouse():
-    pyautogui.moveTo(CENTER_X, CENTER_Y)
+    pyautogui.moveTo(wincenter_x, wincenter_y)
 
 # MousesDown at coordinate if state != 0, otherwise mouseUp and reset
 def click_mouse(x, y, state):
@@ -110,7 +190,7 @@ def click_mouse(x, y, state):
 def press(joy_in, state):
     global paused
     if (inv_joystick[joy_in] == 'pause' and state == 1):
-        button = 'pause' if paused else 'unpause'
+        button = 'unpause' if paused else 'pause'
         paused = not paused
     else:
         button = inv_joystick[joy_in]
@@ -132,10 +212,10 @@ def click_drag_mouse(x, y):
     if not ljoy_held:
         reset_mouse()
         pyautogui.mouseUp()
-        pyautogui.moveTo(CENTER_X, CENTER_Y)
+        pyautogui.moveTo(wincenter_x, wincenter_y)
         pyautogui.mouseDown()
         ljoy_held = True
-    pyautogui.moveTo(CENTER_X + move_x, CENTER_Y + move_y)
+    pyautogui.moveTo(wincenter_x + move_x, wincenter_y + move_y)
 
     x_set = False
     y_set = False
@@ -152,9 +232,9 @@ def swipe(x, y):
     if not rjoy_held:
         reset_mouse()
         pyautogui.mouseUp()
-        pyautogui.moveTo(CENTER_X, CENTER_Y)
+        pyautogui.moveTo(wincenter_x, wincenter_y)
         pyautogui.mouseDown()
-        pyautogui.moveTo(CENTER_X + move_x, CENTER_Y + move_y)
+        pyautogui.moveTo(wincenter_x + move_x, wincenter_y + move_y)
         pyautogui.mouseUp()
         reset_mouse()
         rjoy_held = True
@@ -208,8 +288,10 @@ def main_loop():
     global sry_val
     try:
         events = get_gamepad()
+        find_window()
     except Exception as e:
         print('Exception', str(e))
+
     for event in events:
         if event.ev_type != 'Sync':
             #print(event.ev_type, event.code, event.state)
@@ -258,7 +340,7 @@ def main_loop():
 
 if __name__ == '__main__':
     print('Starting!')
-    reset_mouse()
+    
     try:
         joystick = inputs.devices.gamepads[0]
     except Exception:
@@ -268,6 +350,8 @@ if __name__ == '__main__':
     pyautogui.PAUSE = 1 / REFRESH_HZ
     pyautogui.FAILSAFE = True
     print('Running...')
+    find_window()
+    reset_mouse()
     while True:
         main_loop()
     
